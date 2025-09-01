@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AR.js · AR‑KRAFTLAB</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
+    <style>html,body{margin:0;height:100%;overflow:hidden}</style>
+  </head>
+  <body>
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+      <a-marker preset="hiro">
+        <a-entity id="m" position="0 0 0"></a-entity>
+      </a-marker>
+      <a-entity camera></a-entity>
+      <script>
+        const m = document.querySelector('#m');
+        const glb = 'assets/kraftlab.glb';
+        fetch(glb).then(r=> r.ok ? Promise.resolve(true) : Promise.reject()).then(()=>{
+          const e = document.createElement('a-entity');
+          e.setAttribute('gltf-model', 'url(' + glb + ')');
+          e.setAttribute('scale', '0.5 0.5 0.5');
+          m.appendChild(e);
+        }).catch(()=>{
+          const box = document.createElement('a-box');
+          box.setAttribute('depth', '1'); box.setAttribute('height', '1'); box.setAttribute('width', '1');
+          box.setAttribute('color', '#6ee7ff');
+          box.setAttribute('position', '0 0.5 0');
+          m.appendChild(box);
+        });
+      </script>
+    </a-scene>
+  </body>
+</html>

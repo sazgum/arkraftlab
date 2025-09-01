@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MindAR · AR‑KRAFTLAB</title>
+<style>html,body{margin:0;height:100%;overflow:hidden}#ar{width:100%;height:100%}#hud{position:fixed;left:12px;top:12px;color:#fff;font-family:system-ui;background:rgba(0,0,0,.35);padding:6px 10px;border-radius:8px}</style>
+<script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.152.2/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://unpkg.com/mind-ar@1.2.2/dist/mindar-image-three.prod.js"></script>
+</head>
+<body>
+<div id="ar"></div>
+<div id="hud">MindAR <span id="mode"></span></div>
+<script>
+const url = new URL(location.href);
+const debug = url.searchParams.get('debug')=='1';
+document.getElementById('mode').textContent = debug ? '(debug)' : '(image target)';
+if (debug){
+  const renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.getElementById('ar').appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0e0e0e);
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.01, 100);
+  camera.position.set(0,1.5,3);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x222233, 1.2); scene.add(hemi);
+  const grid = new THREE.GridHelper(10, 20); scene.add(grid);
+  const loader = new THREE.GLTFLoader();
+  loader.load('assets/kraftlab.glb', (gltf)=>{
+    gltf.scene.position.set(0,0,0); gltf.scene.scale.set(.6,.6,.6);
+    scene.add(gltf.scene);
+  }, undefined, ()=>{
+    const geo = new THREE.BoxGeometry(1,1,1);
+    const mat = new THREE.MeshStandardMaterial({color:0x66ccff, metalness:.2, roughness:.6});
+    const m = new THREE.Mesh(geo, mat); m.position.y = .5; scene.add(m);
+  });
+  function tick(){ renderer.render(scene, camera); requestAnimationFrame(tick); }
+  tick();
+} else {
+  const mindarThree = new window.MINDAR.IMAGE.MindARThree({
+    container: document.querySelector('#ar'),
+    imageTargetSrc: 'assets/marker.mind'
+  });
+  const {renderer, scene, camera} = mindarThree;
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x222233, 1.2); scene.add(hemi);
+  const anchor = mindarThree.addAnchor(0);
+  const loader = new THREE.GLTFLoader();
+  loader.load('assets/kraftlab.glb', (gltf)=>{
+    gltf.scene.scale.set(0.5,0.5,0.5);
+    anchor.group.add(gltf.scene);
+  }, undefined, ()=>{
+    const geo = new THREE.TorusKnotGeometry(.5,.18,128,16);
+    const mat = new THREE.MeshStandardMaterial({color:0x5ee7ff, metalness:.4, roughness:.3});
+    const m = new THREE.Mesh(geo, mat);
+    anchor.group.add(m);
+  });
+  mindarThree.start();
+  renderer.setAnimationLoop(()=>{ renderer.render(scene, camera); });
+}
+</script>
+</body>
+</html>
